@@ -19,36 +19,31 @@ function Hero() {
 
     // inside handleSubmit
     const handleSubmit = async () => {
-        if (!inputType) {
-            alert("Please select an input type");
+        // We only care about file input for this project
+        if (inputType !== "csv" || !fileInput) {
+            alert("Please select the CSV input type and choose a file.");
             return;
         }
 
         setLoading(true);
         try {
-            let response;
+            const formData = new FormData();
+            formData.append("file", fileInput);
 
-            if (inputType === "text") {
-                response = await axios.post("http://localhost:5000/api/text", {
-                    text: textInput,
-                });
-            } else if (inputType === "csv" || inputType === "image") {
-                const formData = new FormData();
-                formData.append("file", fileInput);
-                response = await axios.post("http://localhost:5000/api/upload", formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
-            }
+            // This is the only endpoint you need to call
+            const response = await axios.post("http://localhost:5000/api/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
 
-            setResult(response.data); // API response
+            setResult(response.data);
+
         } catch (err) {
             console.error(err);
-            setResult({ error: "Something went wrong" });
+            setResult({ error: "Something went wrong during prediction." });
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <section className="hero">
@@ -67,31 +62,18 @@ function Hero() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5, duration: 1 }}
             >
-                Clean and Green Technology 🌱 — Harnessing Innovation for a Sustainable Future
+                Clean and Green Technology 🌱 - Harnessing Innovation for a Sustainable Future
             </motion.p>
 
             {/* Input Section */}
             <div className="input-section">
 
-                {/* Toggle Buttons instead of dropdown */}
                 <div className="input-toggle">
-                    <button
-                        className={inputType === "text" ? "active" : ""}
-                        onClick={() => setInputType("text")}
-                    >
-                        Text
-                    </button>
                     <button
                         className={inputType === "csv" ? "active" : ""}
                         onClick={() => setInputType("csv")}
                     >
                         CSV
-                    </button>
-                    <button
-                        className={inputType === "image" ? "active" : ""}
-                        onClick={() => setInputType("image")}
-                    >
-                        Image
                     </button>
                 </div>
 
@@ -112,25 +94,55 @@ function Hero() {
                     />
                 )}
             </div>
-            
+
             {/* Result Box */}
             {result && (
                 <div className="result-box">
                     <h3>Result:</h3>
-                    <pre>{JSON.stringify(result, null, 2)}</pre>
+
+                    {/* Prediction */}
+                    {result.prediction && (
+                        <p><strong>Prediction:</strong> {result.prediction}</p>
+                    )}
+
+                    {/* Confidence */}
+                    {result.confidence !== undefined && (
+                        <p><strong>Confidence:</strong> {(result.confidence * 100).toFixed(2)}%</p>
+                    )}
+
+                    {/* Reliability */}
+                    {result.reliability !== undefined && (
+                        <p><strong>Reliability Score:</strong> {(result.reliability * 100).toFixed(0)}%</p>
+                    )}
+
+                    {/* Warnings */}
+                    {result.warnings && result.warnings.length > 0 && (
+                        <div className="warnings">
+                            <strong>Warnings:</strong>
+                            <ul>
+                                {result.warnings.map((w, i) => (
+                                    <li key={i} style={{ color: "orange" }}>{w}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Fallback for errors */}
+                    {result.error && (
+                        <p style={{ color: "red" }}><strong>Error:</strong> {result.error}</p>
+                    )}
                 </div>
             )}
-
-
             <motion.button
                 className="hero-btn"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSubmit}
-                disabled={loading}  // disable while processing
+                disabled={loading} 
             >
                 {loading ? "Processing..." : "Submit"}
             </motion.button>
+
         </section>
     );
 };
