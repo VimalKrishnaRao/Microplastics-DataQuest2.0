@@ -4,10 +4,8 @@ import { motion } from "framer-motion";
 
 
 function Hero() {
-    const [message, setMessage] = useState("");
-    const [inputType, setInputType] = useState("");
-    const [textInput, setTextInput] = useState("");
-    const [fileInput, setFileInput] = useState(null);
+    const [sizeInput, setSizeInput] = useState("");
+    const [toxicityInput, setToxicityInput] = useState("");
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -19,27 +17,23 @@ function Hero() {
 
     // inside handleSubmit
     const handleSubmit = async () => {
-        // We only care about file input for this project
-        if (inputType !== "csv" || !fileInput) {
-            alert("Please select the CSV input type and choose a file.");
+        if (sizeInput === "" || toxicityInput === "") {
+            alert("Please enter a value for both Size and Toxicity.");
             return;
         }
-
         setLoading(true);
+        setResult(null);
+
         try {
-            const formData = new FormData();
-            formData.append("file", fileInput);
-
-            // This is the only endpoint you need to call
-            const response = await axios.post("http://localhost:5000/api/upload", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
+            const response = await axios.post("http://localhost:5000/api/predict_simple", {
+                wavelength: parseFloat(sizeInput),
+                percentT: parseFloat(toxicityInput),
             });
-
             setResult(response.data);
-
         } catch (err) {
             console.error(err);
-            setResult({ error: "Something went wrong during prediction." });
+            const errorMsg = err.response?.data?.error || "Something went wrong.";
+            setResult({ error: errorMsg });
         } finally {
             setLoading(false);
         }
@@ -65,34 +59,27 @@ function Hero() {
                 Clean and Green Technology 🌱 - Harnessing Innovation for a Sustainable Future
             </motion.p>
 
-            {/* Input Section */}
             <div className="input-section">
-
-                <div className="input-toggle">
-                    <button
-                        className={inputType === "csv" ? "active" : ""}
-                        onClick={() => setInputType("csv")}
-                    >
-                        CSV
-                    </button>
+                <div className="manual-form">
+                    <div className="form-group">
+                        <label>Wavelength</label>
+                        <input
+                            type="number"
+                            value={sizeInput}
+                            onChange={(e) => setSizeInput(e.target.value)}
+                            placeholder="Enter Size value"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Transmittance(%T)</label>
+                        <input
+                            type="number"
+                            value={toxicityInput}
+                            onChange={(e) => setToxicityInput(e.target.value)}
+                            placeholder="Enter Toxicity value"
+                        />
+                    </div>
                 </div>
-
-                {/* Conditional Inputs */}
-                {inputType === "text" && (
-                    <textarea
-                        placeholder="Enter your text here..."
-                        value={textInput}
-                        onChange={(e) => setTextInput(e.target.value)}
-                    />
-                )}
-
-                {(inputType === "csv" || inputType === "image") && (
-                    <input
-                        type="file"
-                        accept={inputType === "csv" ? ".csv" : "image/*"}
-                        onChange={(e) => setFileInput(e.target.files[0])}
-                    />
-                )}
             </div>
 
             {/* Result Box */}
