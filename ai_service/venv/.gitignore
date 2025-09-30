@@ -1,0 +1,19 @@
+# Ignore typical Python venv stuff
+bin/
+lib/
+lib64/
+include/
+pyvenv.cfg
+share/
+Scripts/
+.venv/
+
+# But keep model files and source code
+!*.py
+!*.ipynb
+!*.pt
+!*.pkl
+!*.h5
+!*.onnx
+!*.json
+!*.yaml
